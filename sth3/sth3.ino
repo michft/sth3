@@ -159,8 +159,8 @@ uint8_t on_toggle[ NUM_LEDS + 1];
 uint8_t* const on_or_off( on_toggle + 1);
 uint8_t next_toggle[ NUM_LEDS + 1];
 uint8_t* const next_on_or_off( next_toggle + 1);
-byte startHue8 = 1;
-
+uint16_t const loops = 2000;
+uint8_t startHue8 = 5;
 uint16_t XYsafe( uint8_t x, uint8_t y)
 {
   if( x >= kMatrixWidth) return -1;
@@ -171,14 +171,17 @@ uint16_t XYsafe( uint8_t x, uint8_t y)
 
 // Demo that USES "XY" follows code below
 
+void DrawNextFrame( uint8_t  startHue8, uint16_t &remain);
+
 void loop()
 {
 
-
     uint32_t ms = millis();
-    int32_t yHueDelta32 = ((int32_t)cos16( ms * (27/1) ) * (350 / kMatrixWidth));
-    int32_t xHueDelta32 = ((int32_t)cos16( ms * (39/1) ) * (310 / kMatrixHeight));
-    DrawStartFrame( ms / 65536, yHueDelta32 / 32768, xHueDelta32 / 32768);
+
+    /*
+  //  int32_t yHueDelta32 = ((int32_t)cos16( ms * (27/1) ) * (350 / kMatrixWidth));
+ //   int32_t xHueDelta32 = ((int32_t)cos16( ms * (39/1) ) * (310 / kMatrixHeight));
+    Align( 200, 180, 180);
    //  leds[ XY(2, 2)]  = CHSV( 120, 255, 255);
      
     if( ms < 5000 ) {
@@ -187,39 +190,107 @@ void loop()
       FastLED.setBrightness(BRIGHTNESS);
     }
     FastLED.show();
-    delay(500);
+    delay(50);
 
-  for( byte y = 0; y < 50; y++) {
+for( byte y = 0; y < 5; y++) {
 
-    uint32_t ms = millis();
-    int32_t yHueDelta32 = ((int32_t)cos16( ms * (27/1) ) * (350 / kMatrixWidth));
-    int32_t xHueDelta32 = ((int32_t)cos16( ms * (39/1) ) * (310 / kMatrixHeight));
-    DrawNextFrame( startHue8, yHueDelta32 / 32768, xHueDelta32 / 32768);
-   //  leds[ XY(2, 2)]  = CHSV( 120, 255, 255);
-     
+      Align_Next( 200, 180, 180);
     if( ms < 5000 ) {
       FastLED.setBrightness( scale8( BRIGHTNESS, (ms * 256) / 5000));
     } else {
       FastLED.setBrightness(BRIGHTNESS);
     }
     FastLED.show();
- delay (200);
+ delay (1000);
   }
-    if (startHue8 >= 255) { startHue8 = 0;} 
+    //*/
+
+    
+    DrawStartFrame( startHue8);
+     
+    if( ms < 5000 ) {
+      FastLED.setBrightness( scale8( BRIGHTNESS, (ms * 256) / 5000));
+    } else {
+      FastLED.setBrightness(BRIGHTNESS);
+    }
+    FastLED.show();
+    delay(600);
+
+  for( uint16_t y = 0; y < loops; y++) {
+
+    uint32_t ms = millis();
+
+    DrawNextFrame( startHue8, y);
+   //  leds[ XY(2, 2)]  = CHSV( 120, 255, 255);
+     
+    if( ms < 5000 ) {
+      FastLED.setBrightness( scale8( BRIGHTNESS, (ms * 256) / 5000));
+    } else {
+      FastLED.setBrightness(BRIGHTNESS);      
+      if ( y < 10 ) FastLED.setBrightness(BRIGHTNESS / 2);
+      if ( y < 5 ) FastLED.setBrightness(BRIGHTNESS / 4);
+      }
+    FastLED.show();
+    delay (70);
     startHue8 += 5;
+  }
 }
 
-void DrawStartFrame( int8_t startHue8, int8_t yHueDelta8, int8_t xHueDelta8)
+
+/*
+void Align( uint8_t startHue8, uint8_t yHueDelta8, uint8_t xHueDelta8)
+{
+  
+  for(  byte y = 0; y < kMatrixHeight; y++) {   
+    for(  byte x = 0; x < kMatrixWidth; x++) {
+       on_or_off[ XY(x, y)] = 0;
+    }
+  }
+  for( byte y = 0; y < kMatrixHeight; y++) {   
+   on_or_off[ XY(0, y)]  = random(2);
+   leds[ XY(0, y)]  = CHSV( 200, 255, 255*on_or_off[ XY(0, y)]);
+  //nextleds [ XY(kMatrixWidth-1, y)]  = leds[ XY(0, y)];
+   next_on_or_off[ XY(kMatrixWidth-1, y)] = on_or_off[ XY(0, y)];
+   for( byte x = 5; x < kMatrixWidth; x+=5) {
+     on_or_off[ XY(x, y)]  = 1;
+     leds[ XY(x, y)]  = CHSV( 120, 180, 180*on_or_off[ XY(x, y)]);
+     next_on_or_off[ XY(x-1, y)] = on_or_off[ XY(x, y)];
+    }
+  }
+}
+
+void Align_Next( uint8_t startHue8, uint8_t yHueDelta8, uint8_t xHueDelta8)
+{
+
+  for( byte y = 0; y < kMatrixHeight; y++) {   
+   //on_or_off[ XY(0, y)]  = random(2);
+   leds[ XY(0, y)]  = CHSV( 120, 255, 255*on_or_off[ XY(0, y)]);
+   next_on_or_off[ XY(kMatrixWidth-1, y)] = on_or_off[ XY(0, y)];
+   for( byte x = 1; x < kMatrixWidth; x++) {
+     //on_or_off[ XY(x, y)]  = 1;
+     leds[ XY(x, y)]  = CHSV( 120, 180, 180*on_or_off[ XY(x, y)]);
+     next_on_or_off[ XY(x-1, y)] = on_or_off[ XY(x, y)];
+    }
+  }  
+  
+  for(  byte y = 0; y < kMatrixHeight; y++) {   
+    for(  byte x = 0; x < kMatrixWidth; x++) {
+       on_or_off[ XY(x, y)] = next_on_or_off[ XY(x, y)];
+    }
+  }
+}  */
+
+void DrawStartFrame( uint8_t startHue8)
 {
 
   for( byte y = 0; y < kMatrixHeight; y++) {   
    on_or_off[ XY(0, y)]  = random(2);
-   leds[ XY(0, y)]  = CHSV( 120, 255, 255*on_or_off[ XY(0, y)]);
+   leds[ XY(0, y)]  = CHSV( startHue8, 255, 80*on_or_off[ XY(0, y)]);
   //nextleds [ XY(kMatrixWidth-1, y)]  = leds[ XY(0, y)];
    next_on_or_off[ XY(kMatrixWidth-1, y)] = on_or_off[ XY(0, y)];
    for( byte x = 1; x < kMatrixWidth; x++) {
      on_or_off[ XY(x, y)]  = random(2);
-     leds[ XY(x, y)]  = CHSV( 120, 255, 255*on_or_off[ XY(x, y)]);
+     leds[ XY(x, y)]  = CHSV( startHue8, 255, 80*on_or_off[ XY(x, y)]);
      next_on_or_off[ XY(x-1, y)] = on_or_off[ XY(x, y)];
     // nextleds [ XY(x-1, y)]  = leds[ XY(x, y)];
       //   nextleds[ XY(x, y)]  = leds[ XY(x, y)]  ;
@@ -227,13 +298,13 @@ void DrawStartFrame( int8_t startHue8, int8_t yHueDelta8, int8_t xHueDelta8)
   }
 }
 
-void DrawNextFrame( int8_t  startHue8, int8_t yHueDelta8, int8_t xHueDelta8)
+void DrawNextFrame( uint8_t  startHue8, uint16_t &remain)
 {
   uint8_t neighbours = 0;
   uint8_t alive = 0;
   for( byte y = 0; y < kMatrixHeight; y++) {   
    for( byte x = 0; x < kMatrixWidth; x++) {
-     leds[ XY(x, y)]  = CHSV( 4, 255, 255*on_or_off[ XY(x, y)]);
+     leds[ XY(x, y)]  = CHSV( startHue8, 255, 255*on_or_off[ XY(x, y)]);
      alive = on_or_off[ XY(x, y)] ;
      neighbours =   on_or_off[ XY((x-1+kMatrixWidth)%kMatrixWidth, (y+1+kMatrixHeight)%kMatrixHeight)] 
                   + on_or_off[ XY( x, (y+1+kMatrixHeight)%kMatrixHeight)] 
@@ -250,11 +321,46 @@ void DrawNextFrame( int8_t  startHue8, int8_t yHueDelta8, int8_t xHueDelta8)
    //  nextleds [ XY((x+kMatrixWidth-1)%kMatrixWidth, y)]  = leds[ XY(x, y)];
     }
   }
+  uint8_t onon = 0;
+  uint8_t ru = 0;
+  uint8_t onback = 0;
+  for(  byte y = 0; y < kMatrixHeight; y++) { 
+    for(  byte x = 0; x < kMatrixWidth; x++) {
+       if ( last_on_or_off[ XY(x, y)] != on_or_off[ XY(x, y)])      ru   = 1;
+       if ( last_on_or_off[ XY(x, y)] != next_on_or_off[ XY(x, y)]) onback = 1; 
+       
+       last_on_or_off[ XY(x, y)] = on_or_off[ XY(x, y)];
+       on_or_off[ XY(x, y)] = next_on_or_off[ XY(x, y)];
+       if ( on_or_off[ XY(x, y)] == 1 ) {
+         onon++ ;
+       //  y = kMatrixHeight ;
+        // continue;
+       }
+    }
+  }
+  if (onon == 0 && remain < loops - 20 ) remain = loops - 20 ;
+  /*if (onon == 0 && remain < loops - 20 ) {
+    // Glider
+    on_or_off[ XY(2, 0)] =  1;
+    on_or_off[ XY(0, 1)] = 1;
+    on_or_off[ XY(2, 1)] = 1;
+    on_or_off[ XY(1, 2)] = 1;
+    on_or_off[ XY(2, 2)] = 1;
+  } //*/
+  if ((ru == 0 || onback == 0) && remain < loops - 20 ) remain = loops - 20 ;
+  if (onon < 8 && remain < loops - 180 ) remain = loops - 180 ;
+  /*
   for(  byte y = 0; y < kMatrixHeight; y++) {   
     for(  byte x = 0; x < kMatrixWidth; x++) {
        on_or_off[ XY(x, y)] = next_on_or_off[ XY(x, y)];
- }
-  }
+       if ( on_or_off[ XY(x, y)] == 1 ) {
+         on = 1 ;
+         y = kMatrixHeight ;
+         continue;
+       }
+    }
+  }//*/
+  
 }
 
 void setup() {
