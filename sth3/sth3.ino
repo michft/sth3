@@ -218,8 +218,8 @@ for( byte y = 0; y < 5; y++) {
   for( uint16_t y = 0; y < loops; y++) {
 
     uint32_t ms = millis();
-
-    DrawNextFrame( startHue8, y);
+// DrawSte(  startHue8);
+   DrawNextFrame( startHue8, y);
    //  leds[ XY(2, 2)]  = CHSV( 120, 255, 255);
 
     if( ms < 5000 ) {
@@ -278,6 +278,12 @@ void Align_Next( uint8_t startHue8, uint8_t yHueDelta8, uint8_t xHueDelta8)
     }
   }
 }  */
+
+void DrawSte( uint8_t startHue8)
+{
+leds[ XY(0, 0)]  = CHSV( startHue8, 255, 120);
+
+}
 
 void DrawStartFrame( uint8_t startHue8)
 {
@@ -346,6 +352,8 @@ void DrawNextFrame( uint8_t  startHue8, uint16_t &remain)
 }
 
 void setup() {
+  Serial.begin(115200); // Hack to fix problem with FeatherBoard BlueFruit syncing. Not sure why this works.
+
   FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
   FastLED.setBrightness( BRIGHTNESS );
 }
