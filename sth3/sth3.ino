@@ -1,6 +1,6 @@
 #include <FastLED.h>
 
-#define LED_PIN  6
+#define LED_PIN  D2 // for ESP8266
 
 #define COLOR_ORDER RGB
 #define CHIPSET     WS2811
@@ -22,7 +22,6 @@
 //             checking every time you use this function.
 //             This is a slightly more advanced technique, and
 //             it REQUIRES SPECIAL ADDITIONAL setup, described below.
-
 
 // Params for width and height
 const uint8_t kMatrixWidth = 32;
@@ -324,10 +323,10 @@ void DrawNextFrame( uint8_t  startHue8, uint16_t &remain)
   }
 
 // Code to check something is still happening in display.
-  uint8_t onon = 0;
-  uint8_t ru = 0;
-  uint8_t onback = 0;
-  for(  byte y = 0; y < kMatrixHeight; y++) { 
+  uint8_t onon = 0; // Counter of how many lit up LED's
+  uint8_t ru = 0; // Flag for adjacent generations different
+  uint8_t onback = 0; // Flag for grandparent generations different
+  for(  byte y = 0; y < kMatrixHeight; y++) {
     for(  byte x = 0; x < kMatrixWidth; x++) {
       if ( last_on_or_off[ XY(x, y)] != on_or_off[ XY(x, y)])      ru   = 1;
       if ( last_on_or_off[ XY(x, y)] != next_on_or_off[ XY(x, y)]) onback = 1;
@@ -338,21 +337,27 @@ void DrawNextFrame( uint8_t  startHue8, uint16_t &remain)
       }
     }
   }
+// Nothing on, reset in 20 cycles
   if (onon == 0 && remain < loops - 20 ) remain = loops - 20 ;
+// Nothing new, reset in 20 cycles
   if ((ru == 0 || onback == 0) && remain < loops - 20 ) remain = loops - 20 ;
+// Anti-glider, probably not needed (too much corner-case)
   if (onon < 8 && remain < loops - 180 ) remain = loops - 180 ;
-  /*if (onon == 0 && remain < loops - 20 ) {
+/*
+//Insert Glider for wrap testing.
+  if (onon == 0 && remain < loops - 20 ) {
     // Glider
     on_or_off[ XY(2, 0)] =  1;
     on_or_off[ XY(0, 1)] = 1;
     on_or_off[ XY(2, 1)] = 1;
     on_or_off[ XY(1, 2)] = 1;
     on_or_off[ XY(2, 2)] = 1;
-  } //*/
+  }
+//*/
 }
 
 void setup() {
-  Serial.begin(115200); // Hack to fix problem with FeatherBoard BlueFruit syncing. Not sure why this works.
+  Serial.begin(115200);
 
   FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
   FastLED.setBrightness( BRIGHTNESS );
